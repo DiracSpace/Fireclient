@@ -1,8 +1,12 @@
 #!/usr/bin/env python
-import subprocess, deleteFunctions, addFunctions
+import subprocess, deleteFunctions, addFunctions, json, base64
 from google.cloud import firestore
 
-logo = """
+json = json.loads(open('links.json').read())
+
+version = '0.1.2'
+
+logo = f"""
  /$$$$$$$$ /$$                               /$$ /$$                       /$$
 | $$_____/|__/                              | $$|__/                      | $$
 | $$       /$$  /$$$$$$   /$$$$$$   /$$$$$$$| $$ /$$  /$$$$$$  /$$$$$$$  /$$$$$$
@@ -12,12 +16,15 @@ logo = """
 | $$      | $$| $$      |  $$$$$$$|  $$$$$$$| $$| $$|  $$$$$$$| $$  | $$  |  $$$$/
 |__/      |__/|__/       \_______/ \_______/|__/|__/ \_______/|__/  |__/   \___/
                                                                 by DiracSpace
+                                                                Version {version}
 """
 
 firestoreJsonError = "'export GOOGLE_APPLICATION_CREDENTIALS='/path/to/keyfile.json'"
 docuids = []
 options = ["Delete field from all docs in collection", "Delete field from one doc in a collection", "Delete all docs from collection",
-"Delete doc from collection", "Read all docs from collection", "Read all docs and data from collection","Add field to all docs in collection", "Add field/value from another collection to a document in collection"]
+"Delete doc from collection", "Read all docs from collection", "Read all docs and data from collection","Add field to all docs in collection",
+"Add field/value from another collection to a document in collection", "Add same field but different value to all docs in collection",
+"Add new document with N fields", "Add all documents from one collection to another"]
 
 good = '\033[92m[+]\033[0m'
 
@@ -40,6 +47,7 @@ def readAllDocsFromCollection(db, collection):
     ref_obj = db.collection(collection)
     for doc in ref_obj.stream():
         docuids.append(doc.id)
+    print ('\n')
     return docuids
 
 def readAllDocsAndDataFromCollection(db, collection):
@@ -47,14 +55,22 @@ def readAllDocsAndDataFromCollection(db, collection):
     print ('\n')
     ref_obj = db.collection(collection)
     for doc in ref_obj.stream():
+        id = doc.id
         values = doc.to_dict()
         print (f'%s{doc.id}' % good)
         print (*values.items(), sep='\n')
-        print ('\n')
+    print ('Finished')
 
 def addCopiedValueFromAnotherDocToDocInAnotherCollection(db):
     collection = input('Collection name -> ')
     field = input('Field name -> ')
+
+def geturl(key):
+    try:
+        value = json[f'{key}']
+        return value
+    except Exception as e:
+        print (f'Error getting url -> {e}')
 
 def mainProcess(db):
     print ('\n')
@@ -72,13 +88,25 @@ def mainProcess(db):
     elif option == 4:
         collection = input('Collection name -> ')
         docsObtained = readAllDocsFromCollection(db, collection)
-        for index, doc in enumerate(docsObtained):
-            print (f'[{index}] => {doc}')
+        for index, uid in enumerate(docsObtained):
+            print (f'{index} => {uid}')
+        print ('\n')
+        answer = input('Do you want to add these uids as a field? (y/N) -> ')
+        if answer == 'y':
+            addFunctions.adduidArrayToField(db, docsObtained)
     elif option == 5:
         collection = input('Collection name -> ')
         readAllDocsAndDataFromCollection(db, collection)
     elif option == 6:
         addFunctions.addFieldToAllDocsInCollection(db)
+    elif option == 7:
+        print ('not yet bruh')
+    elif option == 8:
+        addFunctions.addSameFieldDifferentValueToAllDocsInCollection(db)
+    elif option == 9:
+        print ('not yet bruh')
+    elif option == 10:
+        addFunctions.addAllDocsFromCollectionToCollection(db)
 
 if __name__ == '__main__':
     print (logo)

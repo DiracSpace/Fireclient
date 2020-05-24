@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import fireclient
+from google.cloud import firestore
 
 def deleteFieldFromAllDocsInCollection(db):
     collection = input('Collection name -> ')
     field = input('Field name -> ')
-    documents = readAllDocsFromCollection(db, collection)
+    documents = fireclient.readAllDocsFromCollection(db, collection)
     for index, uid in enumerate(documents):
         print (f'{index} => deleting {field} from {collection} in {documents[index]}')
         delete_ref = db.collection(collection).document(documents[index])
