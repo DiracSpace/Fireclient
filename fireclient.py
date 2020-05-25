@@ -4,7 +4,7 @@ from google.cloud import firestore
 
 json = json.loads(open('links.json').read())
 
-version = '0.1.2'
+version = '0.1.3'
 
 logo = f"""
  /$$$$$$$$ /$$                               /$$ /$$                       /$$
@@ -24,7 +24,7 @@ docuids = []
 options = ["Delete field from all docs in collection", "Delete field from one doc in a collection", "Delete all docs from collection",
 "Delete doc from collection", "Read all docs from collection", "Read all docs and data from collection","Add field to all docs in collection",
 "Add field/value from another collection to a document in collection", "Add same field but different value to all docs in collection",
-"Add new document with N fields", "Add all documents from one collection to another"]
+"Add new document with N fields", "Add all documents from one collection to another", "Add document N times with different values"]
 
 good = '\033[92m[+]\033[0m'
 
@@ -50,6 +50,15 @@ def readAllDocsFromCollection(db, collection):
     print ('\n')
     return docuids
 
+def readAllDocsFromCollectionWithFilter(db):
+    print (f"Reading document uid's from {collection}")
+    print ('\n')
+    ref_obj = db.collection(collection)
+    for doc in ref_obj.stream():
+        docuids.append(doc.id)
+    print ('\n')
+    return docuids
+
 def readAllDocsAndDataFromCollection(db, collection):
     print (f"Reading document uid's from {collection}")
     print ('\n')
@@ -59,6 +68,7 @@ def readAllDocsAndDataFromCollection(db, collection):
         values = doc.to_dict()
         print (f'%s{doc.id}' % good)
         print (*values.items(), sep='\n')
+        print ('\n')
     print ('Finished')
 
 def addCopiedValueFromAnotherDocToDocInAnotherCollection(db):
@@ -104,9 +114,14 @@ def mainProcess(db):
     elif option == 8:
         addFunctions.addSameFieldDifferentValueToAllDocsInCollection(db)
     elif option == 9:
-        print ('not yet bruh')
+        collection = input('To which collection should I add your doc? -> ')
+        quantity = int(input('How much fields? -> '))
+        addFunctions.addDocumentsToCollection(db, quantity, collection)
+        print ('Finished')
     elif option == 10:
         addFunctions.addAllDocsFromCollectionToCollection(db)
+    elif option == 11:
+        addFunctions.addDocNTimesWithDifferentValues(db)
 
 if __name__ == '__main__':
     print (logo)

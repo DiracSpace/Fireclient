@@ -7,6 +7,9 @@ good = '\033[92m[+]\033[0m'
 def addFieldToAllDocsInCollection(db):
     collection = input('Collection name -> ')
     documents = fireclient.readAllDocsFromCollection(db, collection)
+    for index, uid in enumerate(documents):
+        print (f'[{index}] => {uid}')
+    print ('\n')
     field = input('Field name -> ')
     content = input('Content -> ')
     for index, uid in enumerate(documents):
@@ -50,7 +53,7 @@ def addSameFieldDifferentValueToAllDocsInCollection(db):
     for index, doc in enumerate(documents):
         print (f'[{index}] => {doc}')
     print ('\n')
-    answer = input('Do you want to read data from files? (y/N) ->')
+    answer = input('Do you want to read data from files? (y/N) -> ')
     if answer == 'y':
         print ('Reading from local json file')
         for index, uid in enumerate(documents):
@@ -78,6 +81,24 @@ def addAllDocsFromCollectionToCollection(db):
     for doc in ref_obj.stream():
         id = doc.id
         values = doc.to_dict()
-        db.collection(collection).document().set(values)
+        db.collection(collectiontocopy).document().set(values)
         print (f'Copying {id} from {collection} to {collectiontocopy}')
     print ('Finished')
+
+def addDocumentsToCollection(db, quantity, collection):
+    dataset = {}
+    print ('\n')
+    for fields in range(quantity):
+        key = input('Field name -> ')
+        value = input('Value -> ')
+        dataset[f'{key}'] = f'{value}'
+        print ('\n')
+    doc_ref = db.collection(collection).document()
+    doc_ref.set(dataset, merge=True)
+
+def addDocNTimesWithDifferentValues(db):
+    collection = input('To which collection should I add your doc? -> ')
+    quantity = int(input('How many times? -> '))
+    fields = int(input('How many fields? -> '))
+    for doc in range(quantity):
+        addDocumentsToCollection(db, fields, collection)
