@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-import subprocess, deleteFunctions, addFunctions, json, base64
+import subprocess, deleteFunctions, addFunctions, json
 from google.cloud import firestore
 
-json = json.loads(open('links.json').read())
+#json = json.loads(open('links.json').read())
 
-version = '0.1.3'
+version = '0.1.4'
 
 logo = f"""
  /$$$$$$$$ /$$                               /$$ /$$                       /$$
@@ -24,7 +24,7 @@ docuids = []
 options = ["Delete field from all docs in collection", "Delete field from one doc in a collection", "Delete all docs from collection",
 "Delete doc from collection", "Read all docs from collection", "Read all docs and data from collection","Add field to all docs in collection",
 "Add field/value from another collection to a document in collection", "Add same field but different value to all docs in collection",
-"Add new document with N fields", "Add all documents from one collection to another", "Add document N times with different values"]
+"Add new document with N fields", "Add all documents from one collection to another", "Add document N times with different values", "Add data from JSON file"]
 
 good = '\033[92m[+]\033[0m'
 
@@ -60,14 +60,18 @@ def readAllDocsFromCollectionWithFilter(db):
     return docuids
 
 def readAllDocsAndDataFromCollection(db, collection):
+    dataset = []
     print (f"Reading document uid's from {collection}")
     print ('\n')
     ref_obj = db.collection(collection)
     for doc in ref_obj.stream():
         id = doc.id
         values = doc.to_dict()
+        dataset.append(values)
         print (f'%s{doc.id}' % good)
         print (*values.items(), sep='\n')
+        with open('links.json', 'w') as outfile:
+            json.dump(dataset, outfile)
         print ('\n')
     print ('Finished')
 
@@ -81,6 +85,14 @@ def geturl(key):
         return value
     except Exception as e:
         print (f'Error getting url -> {e}')
+
+def readJSONFile(file):
+    input = open(file)
+    json_array = json.load(input)
+    dataset = []
+    for index, item in enumerate(json_array):
+        dataset.append(item)
+    return dataset
 
 def mainProcess(db):
     print ('\n')
@@ -101,9 +113,11 @@ def mainProcess(db):
         for index, uid in enumerate(docsObtained):
             print (f'{index} => {uid}')
         print ('\n')
-        answer = input('Do you want to add these uids as a field? (y/N) -> ')
-        if answer == 'y':
+        answer = input('All - one field or one - one field? (a/b) -> ')
+        if answer == 'a':
             addFunctions.adduidArrayToField(db, docsObtained)
+        else:
+            addFunctions.addSameFieldDifferentValueToAllDocsInCollection(db, docsObtained)
     elif option == 5:
         collection = input('Collection name -> ')
         readAllDocsAndDataFromCollection(db, collection)
@@ -112,7 +126,8 @@ def mainProcess(db):
     elif option == 7:
         print ('not yet bruh')
     elif option == 8:
-        addFunctions.addSameFieldDifferentValueToAllDocsInCollection(db)
+        data = []
+        addFunctions.addSameFieldDifferentValueToAllDocsInCollection(db, data)
     elif option == 9:
         collection = input('To which collection should I add your doc? -> ')
         quantity = int(input('How much fields? -> '))
@@ -122,6 +137,8 @@ def mainProcess(db):
         addFunctions.addAllDocsFromCollectionToCollection(db)
     elif option == 11:
         addFunctions.addDocNTimesWithDifferentValues(db)
+    elif option == 12:
+        addFunctions.addDataFromJSONFile(db)
 
 if __name__ == '__main__':
     print (logo)
