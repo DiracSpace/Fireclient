@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-import subprocess, deleteFunctions, addFunctions, json
+from modules import deleteFunctions, addFunctions
 from google.cloud import firestore
+import json
 
 #json = json.loads(open('links.json').read())
 
-version = '0.1.4'
+version = '0.1.5'
 
 logo = f"""
  /$$$$$$$$ /$$                               /$$ /$$                       /$$
@@ -24,14 +25,15 @@ docuids = []
 options = ["Delete field from all docs in collection", "Delete field from one doc in a collection", "Delete all docs from collection",
 "Delete doc from collection", "Read all docs from collection", "Read all docs and data from collection","Add field to all docs in collection",
 "Add field/value from another collection to a document in collection", "Add same field but different value to all docs in collection",
-"Add new document with N fields", "Add all documents from one collection to another", "Add document N times with different values", "Add data from JSON file"]
+"Add new document with N fields", "Add all documents from one collection to another", "Add document N times with different values", "Add data from JSON file",
+"Read all docs from collection using filters"]
 
 good = '\033[92m[+]\033[0m'
 
 try:
     db = firestore.Client()
 except Exception as e:
-    print (f'GOOGLE_APPLICATION_CREDENTIALS error appeared, run {firestoreJsonError}')
+    print (f'Google credentials not detected, run {firestoreJsonError}')
     exit()
 
 def printOptions():
@@ -50,14 +52,16 @@ def readAllDocsFromCollection(db, collection):
     print ('\n')
     return docuids
 
-def readAllDocsFromCollectionWithFilter(db):
+def readAllDocsFromCollectionWithFilter(db, collection):
+    field = input('Field name -> ')
+    value = input(f'Where {field} == what? -> ')
     print (f"Reading document uid's from {collection}")
     print ('\n')
-    ref_obj = db.collection(collection)
+    ref_obj = db.collection(collection).where(field, "==", value)
     for doc in ref_obj.stream():
-        docuids.append(doc.id)
-    print ('\n')
-    return docuids
+        id = doc.id
+        values = doc.to_dict()
+        print (f'%s{doc.id}' % good)
 
 def readAllDocsAndDataFromCollection(db, collection):
     dataset = []
@@ -70,9 +74,10 @@ def readAllDocsAndDataFromCollection(db, collection):
         dataset.append(values)
         print (f'%s{doc.id}' % good)
         print (*values.items(), sep='\n')
-        with open('links.json', 'w') as outfile:
-            json.dump(dataset, outfile)
         print ('\n')
+    answer = input('Do you want to create JSON file? (Y/n) -> ')
+    if answer == 'Y':
+        dumpToJSONFile(collection, dataset)
     print ('Finished')
 
 def addCopiedValueFromAnotherDocToDocInAnotherCollection(db):
@@ -93,6 +98,12 @@ def readJSONFile(file):
     for index, item in enumerate(json_array):
         dataset.append(item)
     return dataset
+
+def dumpToJSONFile(collection, dataset):
+    with open(f'{collection}.json', 'w') as outfile:
+        json.dump(dataset, outfile)
+    print (f'Created JSON file {collection}.json in current working directory')
+    print ('\n')
 
 def mainProcess(db):
     print ('\n')
@@ -139,6 +150,9 @@ def mainProcess(db):
         addFunctions.addDocNTimesWithDifferentValues(db)
     elif option == 12:
         addFunctions.addDataFromJSONFile(db)
+    elif option == 13:
+        collection = input('Collection name -> ')
+        readAllDocsFromCollectionWithFilter(db, collection)
 
 if __name__ == '__main__':
     print (logo)
