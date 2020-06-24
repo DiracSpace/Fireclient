@@ -3,7 +3,7 @@ Fireclient
 
 Python client for automating multiple redudant changes to Firestore without entering the web UI
 
-<p align="center"><img src="https://github.com/DiracSpace/Fireclient/blob/master/Fireclient-pictures/fireclient-0.1.4.png" /></p>
+<p align="center"><img src="https://github.com/DiracSpace/Fireclient/blob/master/Fireclient-pictures/fireclient-v0.1.4-patch-02.png" /></p>
 
 Installation
 -------------
